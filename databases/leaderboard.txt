@@ -1,0 +1,6 @@
+name;word;letters;game length;game time
+Marite;politseinik;A, R, F, R, H;33;2025.02.06 14:28:35
+Kilpkonn;suvila;;16;2025.02.06 14:29:10
+Silver;politseinik;H, A, V, A;23;2025.02.06 14:37:53
+Officer;politseinik;H;17;2025.02.06 14:38:30
+Siilike;kasvuhoone;R, R, Y, T, P;29;2025.02.06 15:07:56
