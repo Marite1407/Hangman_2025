@@ -1,0 +1,10 @@
+word;category
+suvila;hoone
+kasvuhoone;hoone
+kool;hoone
+lasteaiakasvataja;amet
+bussijuht;amet
+politseinik;amet
+kass;loom
+koer;loom
+tiiger;loom
