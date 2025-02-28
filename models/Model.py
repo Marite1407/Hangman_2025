@@ -2,26 +2,24 @@ import glob
 import os
 from datetime import datetime
 import random
-
+from models.Database import Database
 from models.FileObject import FileObject
 from models.Leaderboard import Leaderboard
 
 
 class Model:
-
-    def __init__(self):
-        self.__image_files = [] #tühi list piltide jaoks
+    def __init__(self, db):
+        self.db = db  # Kasuta andmebaasi objekti, ära kutsu seda funktsioonina
+        self.__image_files = []  # tühi list piltide jaoks
         self.load_images('images')
-        self.__file_object = FileObject('databases', 'words.txt')
-        self.__categories = self.__file_object.get_unique_categories() #unikaalsed kategooriad
-        self.__scoreboard = Leaderboard() #loo edetabeli objekt (teeb vajadusel faili)
+        self.__categories = self.db.get_all_categories()  # Kategooriad SQLite andmebaasist
         self.titles = ['Poomismäng 2025', 'Kas jäid magama?', 'Ma ootan su käiku!', 'Sisesta juba see täht', 'Zzzzzzzz']
 
-    #mängu muutujad
-        self.__new_word = None #juhuslik sõna mängu jaoks. Sõna, mida ära arvata
-        self.__user_word = [] #kõik kasutaja leitud tähed (visuaal)
-        self.__counter = 0 #vigade loendur
-        self.__all_user_chars = [] #kõik valesti sisestatud tähed
+        # Mängu muutujad (määratakse `start_new_game` sees)
+        self.__new_word = None
+        self.__user_word = []
+        self.__counter = 0
+        self.__all_user_chars = []
 
     def load_images(self, folder):
         if not os.path.exists(folder):
@@ -34,80 +32,80 @@ class Model:
         self.__image_files = images
 
     def start_new_game(self, category_id, category):
-        """Käivitab uue mängu ja valib juhusliku sõna õigest kategooriast."""
-        if category_id == 0 or category is None:
-            category = random.choice(self.__categories)  # Kui kategooriat pole, valime suvalise
+        """Käivitab uue mängu ja valib juhusliku sõna andmebaasist määratud kategooria järgi."""
+        if category_id == 0:
+            category = None  # Kui kategooria ID on 0, võta suvaline sõna
 
-        # Võtame juhusliku sõna ainult valitud kategooriast
-        word_data = self.__file_object.get_random_word(category)
+        word_data = self.db.get_random_word(category)  # Kasutab valitud kategooriat
 
         if word_data:
-            self.__new_word = word_data  # Võtame ainult sõna, sest kategooria on juba teada
+            self.__new_word = word_data[0]  # Võtab ainult sõna, mitte kategooriat
         else:
-            raise ValueError(f"VIGA: Kategoorias '{category}' ei leitud ühtegi sõna!")
+            raise Exception("VIGA: Ei suutnud andmebaasist juhuslikku sõna laadida!")
 
-        self.__user_word = ["_"] * len(self.__new_word)  # Algseis: peidame tähed
+        self.__user_word = ["_"] * len(self.__new_word)  # Peidame tähed
         self.__counter = 0
         self.__all_user_chars = []
 
-    def get_user_input(self,user_input):
-        #user_input on sisestuskasti kirjutatud värk
+    def get_user_input(self, user_input):
+        """Kasutaja sisestab tähe ja kontrollime, kas see on sõnas."""
         if user_input:
-            user_char = user_input [:1] #esimene märk sisestusest
+            user_char = user_input[:1]  # Esimene märk sisestusest
             if user_char.lower() in self.__new_word.lower():
-                self.change_user_input(user_char) #leiti täht
-            else: #ei leitud tähte
+                self.change_user_input(user_char)  # Kui täht on olemas
+            else:
                 self.__counter += 1
-                self.__all_user_chars.append(user_char.upper())
-        else: #kasutaja ei sisestanud midagi
+                self.__all_user_chars.append(user_char.upper())  # Lisa valesti sisestatud täht
+        else:
             self.__counter += 1
 
     def change_user_input(self, user_char):
-        #asenda kõik _ leitud tähega
+        """Asendab kõik `_` leitud tähega."""
         current_word = self.char_to_list(self.__new_word)
-        x = 0
-        for c in current_word:
+        for i, c in enumerate(current_word):
             if c.lower() == user_char.lower():
-                self.__user_word[x] = user_char.upper()
-            x += 1
+                self.__user_word[i] = user_char.upper()
 
     @staticmethod
     def char_to_list(word):
-        #string to list, test => ['t', 'e', 's', 't']
-        chars = []
-        chars[:0] = word
-        return chars
+        """Muutke string listiks, nt `test` → `['t', 'e', 's', 't']`."""
+        return list(word)
 
     def get_all_user_chars(self):
-        return ', '.join(self.__all_user_chars) #list tehakse komaga eraldatud stringiks
+        """Tagastab kõik valesti sisestatud tähed."""
+        return ', '.join(self.__all_user_chars)
 
     def save_player_score(self, name, seconds):
-        today = datetime.now().strftime('%Y-%m-%d %T') #hetke kuupäev ja kell: 2025-02-06 14:12:29
+        """Salvestab mängija tulemuse andmebaasi, mitte enam `leaderboard.txt` failis."""
+        today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Hetke kuupäev ja kell
 
-        if not name.strip(): #nime ei ole
+        if not name.strip():  # Kui nimi puudub
             name = random.choice(['Teadmata', 'Tundmatu', 'Unknown'])
 
-        with open(self.__scoreboard.file_path, 'a', encoding='utf-8') as f:
-            line = ';'.join([name.strip(), self.__new_word, self.get_all_user_chars(), str(seconds), today])
-            f.write(line + '\n')
+        letters = self.get_all_user_chars()  # Vigased tähed
 
-    #Getters
+        # Salvesta tulemus andmebaasi
+        self.db.add_score(name, self.__new_word, letters, seconds)
+
+        print(f"Skoor salvestatud: {name} - {self.__new_word} - {letters} - {seconds} sek - {today}")
+
+    # Getters
     @property
     def image_files(self):
-        """Tagastab piltide listi"""
+        """Tagastab piltide listi."""
         return self.__image_files
 
     @property
     def categories(self):
-        """Tagastab kategooriate listi"""
+        """Tagastab kategooriate listi."""
         return self.__categories
 
     @property
     def user_word(self):
-        """tagastab kasutaja leitud tähed, need mis on õiged"""
+        """Tagastab kasutaja leitud tähed, need mis on õiged."""
         return self.__user_word
 
     @property
     def counter(self):
-        """tagastab vigade arvu"""
+        """Tagastab vigade arvu."""
         return self.__counter

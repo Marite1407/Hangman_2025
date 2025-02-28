@@ -2,6 +2,7 @@ import sys
 from tkinter import Tk, messagebox
 
 from controllers.Controller import Controller
+from models.Database import Database
 from models.Model import Model
 from views.View import View
 
@@ -13,7 +14,8 @@ def show_popup_error(message):
 
 if __name__ == '__main__':
     try:
-        model = Model() #loo mudel
+        db = Database()
+        model = Model(db) #loo mudel
         view = View(model) #loo view andes kaasa model
         Controller(model, view) #loo controller
         view.mainloop() #viimane rida koodis
