@@ -204,7 +204,7 @@ class View(Tk):
             x = 0
 
             for score in data:
-                dt = datetime.strptime(score.game_time, '%Y.%m.%d %H:%M:%S').strftime('%d.%m.%Y %T')
+                dt = datetime.strptime(score.game_time, '%Y-%m-%d %H:%M:%S').strftime('%d.%m.%Y %T')
                 sec = time.strftime('%H:%M:%S', time.gmtime(int(score.game_length)))
 
                 self.my_table.insert(parent='', index='end', iid=str(x), text='',

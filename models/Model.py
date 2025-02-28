@@ -34,17 +34,21 @@ class Model:
         self.__image_files = images
 
     def start_new_game(self, category_id, category):
-        if category_id == 0:
-            category = None
+        """Käivitab uue mängu ja valib juhusliku sõna õigest kategooriast."""
+        if category_id == 0 or category is None:
+            category = random.choice(self.__categories)  # Kui kategooriat pole, valime suvalise
 
-        self.__new_word = self.__file_object.get_random_word(category) #juhuslik sõna
-        self.__user_word = [] #algseis
-        self.__counter = 0 #algseis
-        self.__all_user_chars = [] #algseis
+        # Võtame juhusliku sõna ainult valitud kategooriast
+        word_data = self.__file_object.get_random_word(category)
 
-        #asenda sõnas kõik tähed allkriipsuga M A J A => _ _ _ _
-        for x in range(len(self.__new_word)):
-            self.__user_word.append('_')
+        if word_data:
+            self.__new_word = word_data  # Võtame ainult sõna, sest kategooria on juba teada
+        else:
+            raise ValueError(f"VIGA: Kategoorias '{category}' ei leitud ühtegi sõna!")
+
+        self.__user_word = ["_"] * len(self.__new_word)  # Algseis: peidame tähed
+        self.__counter = 0
+        self.__all_user_chars = []
 
     def get_user_input(self,user_input):
         #user_input on sisestuskasti kirjutatud värk

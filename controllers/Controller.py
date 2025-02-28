@@ -99,7 +99,7 @@ class Controller:
             player_name = simpledialog.askstring('Mäng on läbi', 'Kuidas on mängija nimi? ', parent=self.view)
             messagebox.showinfo('Teade', 'Oled lisatud edetabelisse')
             self.model.save_player_score(player_name, self.stopwatch.seconds)
-            self.view.title(self.model.title[0]) #esimene element title listist
+            self.view.title(self.model.titles[0]) #esimene element title listist
 
     def change_title(self):
         new_title = random.choice(self.model.titles)
