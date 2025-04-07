@@ -32,7 +32,7 @@ class Model:
         self.__image_files = images
 
     def start_new_game(self, category_id, category):
-        """Käivitab uue mängu ja valib juhusliku sõna andmebaasist määratud kategooria järgi."""
+
         if category_id == 0:
             category = None  # Kui kategooria ID on 0, võta suvaline sõna
 
@@ -48,7 +48,7 @@ class Model:
         self.__all_user_chars = []
 
     def get_user_input(self, user_input):
-        """Kasutaja sisestab tähe ja kontrollime, kas see on sõnas."""
+
         if user_input:
             user_char = user_input[:1]  # Esimene märk sisestusest
             if user_char.lower() in self.__new_word.lower():
@@ -60,7 +60,6 @@ class Model:
             self.__counter += 1
 
     def change_user_input(self, user_char):
-        """Asendab kõik `_` leitud tähega."""
         current_word = self.char_to_list(self.__new_word)
         for i, c in enumerate(current_word):
             if c.lower() == user_char.lower():
@@ -72,11 +71,9 @@ class Model:
         return list(word)
 
     def get_all_user_chars(self):
-        """Tagastab kõik valesti sisestatud tähed."""
         return ', '.join(self.__all_user_chars)
 
     def save_player_score(self, name, seconds):
-        """Salvestab mängija tulemuse andmebaasi, mitte enam `leaderboard.txt` failis."""
         today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Hetke kuupäev ja kell
 
         if not name.strip():  # Kui nimi puudub

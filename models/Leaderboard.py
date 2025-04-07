@@ -1,37 +1,30 @@
-import os
+import sqlite3
 from models.Score import Score
 
 
 class Leaderboard:
     def __init__(self):
-        self.__file_path = os.path.join('databases', 'leaderboard.txt')
-        self.check_file() #kontrolli faili olemasolu ja kui pole, siis tee
-
-    def check_file(self):
-        if not os.path.exists(self.__file_path):
-            self.create_leaderboard()
-
-    def create_leaderboard(self):
-        header = ['name', 'word', 'letters', 'game length', 'game time']
-        with open(self.__file_path, 'a', encoding='utf-8') as f:
-            f.write(';'.join(header) + '\n')
+        self.__db_path = "databases/hangman_2025.db"
 
     def read_leaderboard(self):
         leaderboard = []
-        with open(self.__file_path, 'r', encoding='utf-8') as f:
-            lines = f.readlines() #kõik read listi
+        try:
+            connection = sqlite3.connect(self.__db_path)
+            cursor = connection.cursor()
+            cursor.execute(
+                "SELECT name, word, letters, game_length, game_time FROM leaderboard ORDER BY game_length ASC")
+            rows = cursor.fetchall()
+            connection.close()
 
-            if not lines: #ridu ei ole failis
-                return[] #tühi list
+            for row in rows:
+                name, word, letters, game_length, game_time = row
+                leaderboard.append(Score(name, word, letters, game_length, game_time))
 
-            for line in lines[1:]: #alates teisest reast
-                line = line.strip() #korrastame rea
-                name, word, letters, game_length, game_time = line.split(';')
-                leaderboard.append(Score(name, word, letters, int(game_length), game_time))
-            leaderboard = sorted(leaderboard, key=lambda x: (x.game_length, len(x.letters.split(', ')))) #sorteeri kestvuse järgi ja valede tähtede järgi
+            # Sorteeri: esmalt kestuse, siis valede tähtede arvu järgi
+            leaderboard = sorted(leaderboard,
+                                 key=lambda x: (x.game_length, len(x.letters.split(', ')) if x.letters else 0))
+
+        except sqlite3.Error as e:
+            print(f"Viga andmebaasist lugemisel: {e}")
 
         return leaderboard
-
-    @property
-    def file_path(self):
-        return self.__file_path #failinimi koos kaustaga databases/ leaderboard.txt
